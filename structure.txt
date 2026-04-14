@@ -1,0 +1,14 @@
+yahoo-downloader/
+│
+├── src/
+│   ├── main.cpp
+│   ├── downloader.cpp
+│   ├── downloader.h
+│
+├── include/          (optional for later)
+│
+├── build/            (CMake output)
+│
+├── CMakeLists.txt
+│
+└── data/             (CSV output)

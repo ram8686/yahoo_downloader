@@ -56,3 +56,17 @@ std::vector<std::string> fetch_nse_tickers(const std::string& index)
 
     return parse_csv(csv);
 }
+
+// --------- Build ticker list along with the extras in settings.ini ---------
+std::vector<std::string> buildTickerList(const std::string& index, ConfigManager& config)
+{
+    auto tickers = fetch_nse_tickers(index);
+
+    const auto extras = config.extraTickers();
+    for (const auto &e : extras)
+        tickers.push_back(e);
+
+    tickers.insert(tickers.begin(), "All");
+
+    return tickers;
+}

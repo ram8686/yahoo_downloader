@@ -3,6 +3,8 @@ project(YahooDownloader)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
 
 find_package(CURL REQUIRED)
 find_package(nlohmann_json REQUIRED)
@@ -16,6 +18,8 @@ add_executable(yahoo_downloader
     fetch_nse_tickers.cpp
     utils/csv_writer.cpp
     utils/file_utils.cpp
+    main_dialog.cpp
+    ydl_input.ui
 )
 
 target_include_directories(yahoo_downloader PRIVATE

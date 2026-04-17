@@ -1,6 +1,7 @@
 #include "downloader_worker.h"
 
 #include <QElapsedTimer>
+#include <QString>
 
 #include "downloader.h"
 #include "csv_writer.h"
@@ -10,15 +11,16 @@
 
 DownloaderWorker::DownloaderWorker(std::vector<std::string> tickers,
                                    std::string interval,
-                                   std::string range,
-                                   std::function<void(const std::string&)> progress_cb,
-                                   std::function<void(const std::string&)> done_cb)
+                                   std::string range)
     : m_tickers(std::move(tickers)),
       m_interval(std::move(interval)),
-      m_range(std::move(range)),
-      m_progress(std::move(progress_cb)),
-      m_done(std::move(done_cb))
+      m_range(std::move(range))
 {
+}
+
+void DownloaderWorker::requestStop()
+{
+    stopRequested = true;
 }
 
 void DownloaderWorker::process()
@@ -32,12 +34,18 @@ void DownloaderWorker::process()
 
     for (const auto& t : m_tickers)
     {
+        // 🔴 Cancel check
+        if (stopRequested)
+        {
+            emit status("Cancelled");
+            emit finished();
+            return;
+        }
+
         ++count;
 
-        // Build Yahoo ticker
         const std::string yahoo_ticker = t + ".NS";
 
-        // Fetch and parse data
         const std::string url = build_url(yahoo_ticker, m_range, m_interval);
         const std::string response = fetch_data(url);
 
@@ -55,32 +63,30 @@ void DownloaderWorker::process()
         std::string filename = build_filepath(t, m_interval);
         write_csv(filename, data, t, m_interval);
 
-        // Progress update (every 10 items or single ticker)
-        if (m_progress && (count % 10 == 0 || total == 1))
-        {
-            const double elapsed = totalTimer.elapsed() / 1000.0;
-            const double avg = elapsed / count;
-            const double remaining = avg * (total - count);
+        // ---- PROGRESS UPDATE ----
+        int percent = (count * 100) / total;
+        emit progress(percent);
 
-            const std::string msg =
-                "Downloading: " + t +
-                " (" + std::to_string(count) + "/" + std::to_string(total) +
-                ") ETA: " + std::to_string(static_cast<int>(remaining)) + " sec";
+        const double elapsed = totalTimer.elapsed() / 1000.0;
+        const double avg = elapsed / count;
+        const double remaining = avg * (total - count);
 
-            m_progress(msg);
-        }
+        const std::string msg =
+            "Downloading: " + t +
+            " (" + std::to_string(count) + "/" + std::to_string(total) +
+            ") ETA: " + std::to_string(static_cast<int>(remaining)) + " sec";
+
+        emit status(QString::fromStdString(msg));
     }
 
-    // Final completion message
+    // ---- FINAL MESSAGE ----
     double totalTime = totalTimer.elapsed() / 1000.0;
 
     std::string msg = "Done in " + std::to_string((int)totalTime) + " sec";
 
-    // ---- ADD FAILED LIST ----
     if (!failed.empty())
     {
         msg += " | Failed: ";
-
         for (size_t i = 0; i < failed.size(); ++i)
         {
             msg += failed[i];
@@ -89,6 +95,7 @@ void DownloaderWorker::process()
         }
     }
 
-    if (m_done)
-        m_done(msg);
-    }
+    emit progress(100);
+    emit status(QString::fromStdString(msg));
+    emit finished();
+}

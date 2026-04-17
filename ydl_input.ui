@@ -31,16 +31,13 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <property name="styleSheet">
-   <string>0</string>
-  </property>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>20</y>
      <width>172</width>
-     <height>270</height>
+     <height>278</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">

@@ -1,5 +1,6 @@
 #include <QApplication>
 #include "main_dialog.h"
+#include "progress_dialog.h"
 
 int main(int argc, char *argv[])
 {
@@ -12,9 +13,11 @@ int main(int argc, char *argv[])
     {
         auto params = dialog.getParams();
 
-        // TEMP: just print / inspect
-        qDebug() << "Index:" << QString::fromStdString(params.index);
-        qDebug() << "Ticker:" << QString::fromStdString(params.ticker);
+        ProgressDialog progress(params);
+        progress.setWindowTitle("Downloading...");
+
+        progress.startDownload();
+        progress.exec();
     }
 
     return 0;

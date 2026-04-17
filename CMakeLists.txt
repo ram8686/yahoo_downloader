@@ -19,7 +19,9 @@ add_executable(yahoo_downloader
     utils/csv_writer.cpp
     utils/file_utils.cpp
     main_dialog.cpp
+    progress_dialog.cpp
     ydl_input.ui
+    progress_dialog.ui
 )
 
 target_include_directories(yahoo_downloader PRIVATE

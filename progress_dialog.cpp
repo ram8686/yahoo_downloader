@@ -6,6 +6,7 @@
 #include "downloader_worker.h"
 
 #include <QThread>
+#include <QMessageBox>
 
 ProgressDialog::ProgressDialog(const DownloadParams &params, QWidget *parent)
     : QDialog(parent),
@@ -26,22 +27,36 @@ void ProgressDialog::setupConnections()
 {
     connect(ui->cancelButton, &QPushButton::clicked, this, [this]()
     {
-        if (worker)
-            worker->requestStop();   // we’ll add this
+        if (!worker)
+            return;
+
+        auto reply = QMessageBox::question(
+            this,
+            "Cancel Download",
+            "Do you want to stop the download?",
+            QMessageBox::Yes | QMessageBox::No
+        );
+
+        if (reply == QMessageBox::Yes)
+        {
+            worker->requestStop();
             ui->statusLabel->setText("Cancelling...");
             ui->cancelButton->setEnabled(false);
+            m_cancelRequested = true;
+        }
     });
 }
 
 void ProgressDialog::startDownload()
 {
+    m_timer.start();
+    m_cancelRequested = false;
+
     std::vector<std::string> tickers;
 
     if (m_params.ticker == "All")
     {
-        // expand to full list
         ConfigManager config("settings.ini");
-
         tickers = buildTickerList(m_params.index, config);
     }
     else
@@ -75,11 +90,11 @@ void ProgressDialog::startDownload()
         ui->statusLabel->setText(msg);
     });
 
-    // Finished
+    // Finished → show summary instead of direct close
     connect(worker, &DownloaderWorker::finished, this,
         [this]()
     {
-        accept();   // close dialog
+        showFinalSummary();
     });
 
     // Cleanup
@@ -90,3 +105,47 @@ void ProgressDialog::startDownload()
     thread->start();
 }
 
+void ProgressDialog::showFinalSummary()
+{
+    int sec = m_timer.elapsed() / 1000;
+
+    QString msg;
+
+    if (m_cancelRequested)
+        msg = QString("Download cancelled after %1 sec").arg(sec);
+    else
+        msg = QString("Download completed in %1 sec").arg(sec);
+
+    QMessageBox::information(this, "Download Status", msg);
+
+    accept();  // close dialog AFTER showing summary
+}
+
+void ProgressDialog::closeEvent(QCloseEvent *event)
+{
+    if (worker && !m_cancelRequested)
+    {
+        auto reply = QMessageBox::question(
+            this,
+            "Exit",
+            "Download in progress. Cancel and exit?",
+            QMessageBox::Yes | QMessageBox::No
+        );
+
+        if (reply == QMessageBox::No)
+        {
+            event->ignore();
+            return;
+        }
+
+        worker->requestStop();
+        ui->statusLabel->setText("Cancelling...");
+        ui->cancelButton->setEnabled(false);
+        m_cancelRequested = true;
+
+        event->ignore();  // wait for worker to finish
+        return;
+    }
+
+    event->accept();
+}

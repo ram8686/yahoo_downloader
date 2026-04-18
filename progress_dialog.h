@@ -1,7 +1,10 @@
 #pragma once
 
 #include <QDialog>
-#include "main_dialog.h" 
+#include <QElapsedTimer>
+#include <QCloseEvent>
+
+#include "main_dialog.h"
 
 namespace Ui {
     class progressDialog;
@@ -19,10 +22,20 @@ public:
 
     void startDownload();
 
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
 private:
     Ui::progressDialog *ui;
 
     DownloaderWorker *worker;
-    DownloadParams m_params;   // store input
+    DownloadParams m_params;
+
+    // 🔹 New state tracking
+    bool m_cancelRequested = false;
+    QElapsedTimer m_timer;
+
+    // 🔹 Helpers
     void setupConnections();
+    void showFinalSummary();
 };

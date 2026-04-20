@@ -19,12 +19,41 @@ static size_t write_callback(void* contents, size_t size, size_t nmemb, std::str
 }
 
 // ------------------ URL ------------------
+long to_epoch(const QDate& date)
+{
+    std::tm tm = {};
+    tm.tm_year = date.year() - 1900;
+    tm.tm_mon  = date.month() - 1;
+    tm.tm_mday = date.day();
+    tm.tm_hour = 0;
+    tm.tm_min  = 0;
+    tm.tm_sec  = 0;
+
+    return std::mktime(&tm);
+}
+
 std::string build_url(const std::string& ticker,
                       const std::string& range,
-                      const std::string& interval)
+                      const std::string& interval,
+                      const QDate& startDate,
+                      const QDate& endDate)
 {
-    return "https://query1.finance.yahoo.com/v8/finance/chart/" +
-           ticker + "?range=" + range + "&interval=" + interval;
+    std::string base = "https://query1.finance.yahoo.com/v8/finance/chart/" + ticker;
+
+    // 🔹 RANGE MODE
+    if (!range.empty())
+    {
+        return base + "?range=" + range + "&interval=" + interval;
+    }
+
+    // 🔹 DATE MODE
+    long start_epoch = to_epoch(startDate);
+    long end_epoch   = to_epoch(endDate);
+
+    return base +
+           "?period1=" + std::to_string(start_epoch) +
+           "&period2=" + std::to_string(end_epoch) +
+           "&interval=" + interval;
 }
 
 // ------------------ FETCH ------------------

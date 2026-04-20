@@ -13,10 +13,14 @@
 int completed = 0;
 DownloaderWorker::DownloaderWorker(std::vector<std::string> tickers,
                                    std::string interval,
-                                   std::string range)
+                                   std::string range,
+                                   QDate startDate,
+                                   QDate endDate)
     : m_tickers(std::move(tickers)),
       m_interval(std::move(interval)),
-      m_range(std::move(range))
+      m_range(std::move(range)),
+      m_startDate(startDate),
+      m_endDate(endDate)
 {
 }
 
@@ -54,7 +58,13 @@ void DownloaderWorker::process()
 
         const std::string yahoo_ticker = t + ".NS";
 
-        const std::string url = build_url(yahoo_ticker, m_range, m_interval);
+        const std::string url = build_url(
+            yahoo_ticker,
+            m_range,
+            m_interval,
+            m_startDate,
+            m_endDate
+        );
         const std::string response = fetch_data(url);
 
         // 🔴 Cancel check (after network call)

@@ -63,7 +63,9 @@ void ProgressDialog::startDownload()
     worker = new DownloaderWorker(
         tickers,
         m_params.interval,
-        m_params.range
+        m_params.range,
+        m_params.startDate,
+        m_params.endDate
     );
 
     QThread *thread = new QThread();

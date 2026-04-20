@@ -2,7 +2,7 @@
 
 ## 🔧 Immediate (Next Session)
 
-- [ ] Add proper application / dialog icon (Qt + Windows exe)
+- [X] Add proper application / dialog icon (Qt + Windows exe)
 - [ ] Verify "Dates" mode (instead of range)
 - [ ] Fix default date display in UI
 
@@ -21,7 +21,7 @@
 - [ ] Replace QMessageBox with proper summary dialog
 - [ ] Scrollable list for failed tickers
 - [ ] Optional: copy/export failed tickers
-- [ ] Show live "Completed: X / Y" during download
+- [X] Show live "Completed: X / Y" during download
 
 ---
 

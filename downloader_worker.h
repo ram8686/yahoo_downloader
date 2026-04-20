@@ -13,7 +13,9 @@ class DownloaderWorker : public QObject
 public:
     DownloaderWorker(std::vector<std::string> tickers,
                      std::string interval,
-                     std::string range);
+                     std::string range,
+                    QDate startDate,
+                    QDate endDate);
 
     void requestStop();
 
@@ -31,6 +33,8 @@ private:
     std::vector<std::string> m_tickers;
     std::string m_interval;
     std::string m_range;
+    QDate m_startDate;
+    QDate m_endDate;
 
     std::atomic<bool> stopRequested{false};
 };

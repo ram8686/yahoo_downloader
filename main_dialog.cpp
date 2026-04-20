@@ -32,6 +32,9 @@ void MainDialog::populateUI()
     ui.rangeBox->addItems({"1d","5d","7d","1mo","60d","3mo","6mo","1y","2y","5y","10y","ytd","max"});
     ui.rangeBox->setCurrentText(QString::fromStdString(config.defaultRange()));
 
+    ui.startDateEdit->setDate(QDate::currentDate().addMonths(-1));
+    ui.endDateEdit->setDate(QDate::currentDate());
+
     ui.tickerBox->addItem("All");
 
     auto tickers = buildTickerList(config.defaultIndex(), config);
@@ -93,9 +96,12 @@ DownloadParams MainDialog::getParams() const
     if (p.useRange)
     {
         p.range = ui.rangeBox->currentText().toStdString();
+        p.startDate = QDate();  // clear
+        p.endDate   = QDate();  // clear
     }
     else
     {
+        p.range.clear();  // 🔥 VERY IMPORTANT
         p.startDate = ui.startDateEdit->date();
         p.endDate   = ui.endDateEdit->date();
     }

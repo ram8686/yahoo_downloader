@@ -22,7 +22,10 @@ add_executable(yahoo_downloader
     progress_dialog.cpp
     ydl_input.ui
     progress_dialog.ui
+    resources.qrc
 )
+
+target_sources(yahoo_downloader PRIVATE app.rc)
 
 target_include_directories(yahoo_downloader PRIVATE
     .

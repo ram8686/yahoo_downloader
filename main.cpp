@@ -1,10 +1,13 @@
 #include <QApplication>
+#include <QIcon>
 #include "main_dialog.h"
 #include "progress_dialog.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+
+    app.setWindowIcon(QIcon(":/icons/app.ico"));
 
     MainDialog dialog;
     dialog.setWindowTitle("Yahoo Downloader");

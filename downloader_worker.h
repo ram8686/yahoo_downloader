@@ -3,6 +3,8 @@
 #include <QObject>
 #include <vector>
 #include <string>
+#include <atomic>
+#include <QStringList>
 
 class DownloaderWorker : public QObject
 {
@@ -21,12 +23,14 @@ public slots:
 signals:
     void progress(int value);             // % progress
     void status(const QString &msg);      // status text
-    void finished();                      // done
+
+    // 🔹 Updated signal with structured result
+    void finished(bool cancelled, QStringList failed, int timeSec, int total, int completed);
 
 private:
     std::vector<std::string> m_tickers;
     std::string m_interval;
     std::string m_range;
 
-    bool stopRequested = false;
+    std::atomic<bool> stopRequested{false};
 };

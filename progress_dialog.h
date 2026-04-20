@@ -37,5 +37,5 @@ private:
 
     // 🔹 Helpers
     void setupConnections();
-    void showFinalSummary();
+    void showFinalSummary(bool cancelled, const QStringList &failed, int sec, int total, int completed);
 };

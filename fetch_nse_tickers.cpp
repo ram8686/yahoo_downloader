@@ -66,7 +66,5 @@ std::vector<std::string> buildTickerList(const std::string& index, ConfigManager
     for (const auto &e : extras)
         tickers.push_back(e);
 
-    tickers.insert(tickers.begin(), "All");
-
     return tickers;
 }

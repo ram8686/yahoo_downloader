@@ -32,6 +32,8 @@ void MainDialog::populateUI()
     ui.rangeBox->addItems({"1d","5d","7d","1mo","60d","3mo","6mo","1y","2y","5y","10y","ytd","max"});
     ui.rangeBox->setCurrentText(QString::fromStdString(config.defaultRange()));
 
+    ui.tickerBox->addItem("All");
+
     auto tickers = buildTickerList(config.defaultIndex(), config);
     for (const auto &t : tickers)
         ui.tickerBox->addItem(QString::fromStdString(t));
@@ -45,6 +47,7 @@ void MainDialog::setupConnections()
         [this](const QString &text)
     {
         ui.tickerBox->clear();
+        ui.tickerBox->addItem("All");
 
         auto tickers = buildTickerList(text.toStdString(), config);
         for (const auto &t : tickers)

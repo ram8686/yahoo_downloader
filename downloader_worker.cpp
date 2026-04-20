@@ -2,6 +2,7 @@
 
 #include <QElapsedTimer>
 #include <QString>
+#include <QThread>
 
 #include "downloader.h"
 #include "csv_writer.h"
@@ -9,6 +10,7 @@
 
 #include <nlohmann/json.hpp>
 
+int completed = 0;
 DownloaderWorker::DownloaderWorker(std::vector<std::string> tickers,
                                    std::string interval,
                                    std::string range)
@@ -34,11 +36,17 @@ void DownloaderWorker::process()
 
     for (const auto& t : m_tickers)
     {
-        // 🔴 Cancel check
-        if (stopRequested)
+        // 🔴 Cancel check (early)
+        if (stopRequested || QThread::currentThread()->isInterruptionRequested())
         {
+            int sec = totalTimer.elapsed() / 1000;
+
             emit status("Cancelled");
-            emit finished();
+            QStringList failedList;
+            for (const auto &f : failed)
+                failedList << QString::fromStdString(f);
+
+            emit finished(true, failedList, sec, total, completed);
             return;
         }
 
@@ -49,7 +57,32 @@ void DownloaderWorker::process()
         const std::string url = build_url(yahoo_ticker, m_range, m_interval);
         const std::string response = fetch_data(url);
 
-        auto j = nlohmann::json::parse(response);
+        // 🔴 Cancel check (after network call)
+        if (stopRequested)
+        {
+            int sec = totalTimer.elapsed() / 1000;
+
+            emit status("Cancelled");
+            QStringList failedList;
+            for (const auto &f : failed)
+                failedList << QString::fromStdString(f);
+
+            emit finished(true, failedList, sec, total, completed);
+            return;
+        }
+
+        nlohmann::json j;
+
+        try
+        {
+            j = nlohmann::json::parse(response);
+        }
+        catch (...)
+        {
+            failed.push_back(t);
+            continue;
+        }
+
         OHLCV data = extract_ohlcv(j);
 
         // ---- HANDLE FAILURE ----
@@ -62,6 +95,7 @@ void DownloaderWorker::process()
         // ---- WRITE FILE ----
         std::string filename = build_filepath(t, m_interval);
         write_csv(filename, data, t, m_interval);
+        completed++;
 
         // ---- PROGRESS UPDATE ----
         int percent = (count * 100) / total;
@@ -79,23 +113,14 @@ void DownloaderWorker::process()
         emit status(QString::fromStdString(msg));
     }
 
-    // ---- FINAL MESSAGE ----
-    double totalTime = totalTimer.elapsed() / 1000.0;
-
-    std::string msg = "Done in " + std::to_string((int)totalTime) + " sec";
-
-    if (!failed.empty())
-    {
-        msg += " | Failed: ";
-        for (size_t i = 0; i < failed.size(); ++i)
-        {
-            msg += failed[i];
-            if (i != failed.size() - 1)
-                msg += ", ";
-        }
-    }
+    // ---- COMPLETION ----
+    int sec = totalTimer.elapsed() / 1000;
 
     emit progress(100);
-    emit status(QString::fromStdString(msg));
-    emit finished();
+
+    QStringList failedList;
+    for (const auto &f : failed)
+        failedList << QString::fromStdString(f);
+
+    emit finished(false, failedList, sec, total, completed);
 }

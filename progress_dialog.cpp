@@ -42,16 +42,12 @@ void ProgressDialog::setupConnections()
             worker->requestStop();
             ui->statusLabel->setText("Cancelling...");
             ui->cancelButton->setEnabled(false);
-            m_cancelRequested = true;
         }
     });
 }
 
 void ProgressDialog::startDownload()
 {
-    m_timer.start();
-    m_cancelRequested = false;
-
     std::vector<std::string> tickers;
 
     if (m_params.ticker == "All")
@@ -90,11 +86,11 @@ void ProgressDialog::startDownload()
         ui->statusLabel->setText(msg);
     });
 
-    // Finished → show summary instead of direct close
+    // ✅ NEW: receive structured result
     connect(worker, &DownloaderWorker::finished, this,
-        [this]()
+        [this](bool cancelled, QStringList failed, int sec, int total, int completed)
     {
-        showFinalSummary();
+        showFinalSummary(cancelled, failed, sec, total, completed);
     });
 
     // Cleanup
@@ -105,25 +101,39 @@ void ProgressDialog::startDownload()
     thread->start();
 }
 
-void ProgressDialog::showFinalSummary()
+void ProgressDialog::showFinalSummary(bool cancelled, const QStringList &failed, int sec, int total, int completed)
 {
-    int sec = m_timer.elapsed() / 1000;
-
     QString msg;
 
-    if (m_cancelRequested)
+    if (cancelled)
         msg = QString("Download cancelled after %1 sec").arg(sec);
     else
         msg = QString("Download completed in %1 sec").arg(sec);
 
+    // 🔹 Add completed/total
+    msg += QString("\n\nCompleted: %1 / %2").arg(completed).arg(total);
+
+    if (cancelled)
+    {
+        int remaining = total - completed - failed.size();
+        msg += QString("\nRemaining: %1").arg(remaining);
+    }
+
+    // 🔹 Failed list
+    if (!failed.isEmpty())
+    {
+        msg += "\n\nFailed tickers:\n";
+        msg += failed.join(", ");
+    }
+
     QMessageBox::information(this, "Download Status", msg);
 
-    accept();  // close dialog AFTER showing summary
+    accept();
 }
 
 void ProgressDialog::closeEvent(QCloseEvent *event)
 {
-    if (worker && !m_cancelRequested)
+    if (worker)
     {
         auto reply = QMessageBox::question(
             this,
@@ -141,7 +151,6 @@ void ProgressDialog::closeEvent(QCloseEvent *event)
         worker->requestStop();
         ui->statusLabel->setText("Cancelling...");
         ui->cancelButton->setEnabled(false);
-        m_cancelRequested = true;
 
         event->ignore();  // wait for worker to finish
         return;

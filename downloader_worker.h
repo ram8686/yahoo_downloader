@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QObject>
+#include <QDate>
+
 #include <vector>
 #include <string>
 #include <atomic>

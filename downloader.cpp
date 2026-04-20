@@ -1,5 +1,7 @@
 #include "downloader.h"
 
+#include <QDate>
+
 #include <curl/curl.h>
 #include <fstream>
 #include <cmath>

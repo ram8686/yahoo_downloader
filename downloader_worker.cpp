@@ -3,6 +3,7 @@
 #include <QElapsedTimer>
 #include <QString>
 #include <QThread>
+#include <QDate>
 
 #include "downloader.h"
 #include "csv_writer.h"

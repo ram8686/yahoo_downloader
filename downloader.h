@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QDate>
+
 #include <string>
 #include <vector>
 #include <nlohmann/json.hpp>
@@ -15,7 +17,9 @@ struct OHLCV
 // Build Yahoo Finance URL
 std::string build_url(const std::string& ticker,
                       const std::string& range,
-                      const std::string& interval);
+                      const std::string& interval,
+                      const QDate& startDate,
+                      const QDate& endDate);
 
 // Fetch raw JSON response
 std::string fetch_data(const std::string& url);

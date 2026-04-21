@@ -1,8 +1,10 @@
 #pragma once
 
 #include <QDialog>
+#include <QDate>
+
 #include "config_manager.h"
-#include "ui_ydl_input.h"   // <-- this will be generated
+#include "ui_ydl_input.h"
 
 struct DownloadParams
 {
@@ -31,6 +33,10 @@ private:
 
     void setupConnections();
     void populateUI();
+
+    // 🔹 New: dynamic range control based on interval
+    void updateRangeOptions(const QString& interval);
+
+    // 🔹 New: validation for date mode
+    bool validateParams(const DownloadParams& p);
 };
-
-

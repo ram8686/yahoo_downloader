@@ -8,6 +8,7 @@
 #include "downloader.h"
 #include "csv_writer.h"
 #include "file_utils.h"
+#include <iostream>
 
 #include <nlohmann/json.hpp>
 

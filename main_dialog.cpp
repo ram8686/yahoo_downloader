@@ -5,7 +5,6 @@
 #include <QString>
 #include <QRadioButton>
 #include <QPushButton>
-#include <QMessageBox>
 
 #include "config_manager.h"
 #include "fetch_nse_tickers.h"
@@ -29,12 +28,16 @@ void MainDialog::populateUI()
     ui.intervalBox->addItems({"1m","5m","15m","30m","1h","1d","5d","1wk","1mo","3mo"});
     ui.intervalBox->setCurrentText(QString::fromStdString(config.defaultInterval()));
 
-    // 🔹 Set dynamic range based on interval
     updateRangeOptions(ui.intervalBox->currentText());
 
-    // 🔹 FIX: default dates (end should NOT be today)
-    ui.startDateEdit->setDate(QDate::currentDate().addMonths(-1));
-    ui.endDateEdit->setDate(QDate::currentDate().addDays(-1));
+    // 🔹 Default dates
+    QDate today = QDate::currentDate();
+    ui.endDateEdit->setDate(today);
+    ui.startDateEdit->setDate(today.addMonths(-1));
+
+    // 🔹 Global limits (no future)
+    ui.endDateEdit->setMaximumDate(today);
+    ui.startDateEdit->setMaximumDate(today);
 
     ui.tickerBox->addItem("All");
 
@@ -43,6 +46,8 @@ void MainDialog::populateUI()
         ui.tickerBox->addItem(QString::fromStdString(t));
 
     ui.tickerBox->setCurrentIndex(0);
+
+    updateDateLimits();
 }
 
 void MainDialog::setupConnections()
@@ -60,11 +65,26 @@ void MainDialog::setupConnections()
         ui.tickerBox->setCurrentIndex(0);
     });
 
-    // 🔹 Interval → Range dependency
+    // 🔹 Interval → Range + Date limits
     connect(ui.intervalBox, &QComboBox::currentTextChanged, this,
         [this](const QString &interval)
     {
         updateRangeOptions(interval);
+        updateDateLimits();
+    });
+
+    // 🔹 Start ≤ End
+    connect(ui.startDateEdit, &QDateEdit::dateChanged, this,
+        [this](const QDate &start)
+    {
+        ui.endDateEdit->setMinimumDate(start);
+    });
+
+    connect(ui.endDateEdit, &QDateEdit::dateChanged, this,
+        [this](const QDate &end)
+    {
+        ui.startDateEdit->setMaximumDate(end);
+        updateDateLimits();
     });
 
     connect(ui.rangeRadio, &QRadioButton::toggled, this,
@@ -81,14 +101,11 @@ void MainDialog::setupConnections()
             ui.stackedWidget->setCurrentIndex(1);
     });
 
-    // 🔹 VALIDATION HOOK
+    // 🔹 No validation — always accept (UI guarantees correctness)
     connect(ui.downloadButton, &QPushButton::clicked, this,
         [this]()
     {
-        DownloadParams p = getParams();
-
-        if (validateParams(p))
-            accept();
+        accept();
     });
 
     connect(ui.cancelButton, &QPushButton::clicked,
@@ -113,7 +130,7 @@ DownloadParams MainDialog::getParams() const
     }
     else
     {
-        p.range.clear();  // 🔥 critical
+        p.range.clear();
         p.startDate = ui.startDateEdit->date();
         p.endDate   = ui.endDateEdit->date();
     }
@@ -122,7 +139,7 @@ DownloadParams MainDialog::getParams() const
 }
 
 //
-// 🔹 NEW FUNCTIONS
+// 🔹 RANGE CONTROL
 //
 
 void MainDialog::updateRangeOptions(const QString& interval)
@@ -151,42 +168,36 @@ void MainDialog::updateRangeOptions(const QString& interval)
     ui.rangeBox->setCurrentIndex(0);
 }
 
-bool MainDialog::validateParams(const DownloadParams& p)
+//
+// 🔹 DATE LIMIT LOGIC
+//
+
+int MainDialog::maxDaysForInterval(const QString& interval)
 {
-    if (!p.useRange)
+    if (interval == "1m") return 7;
+    if (interval == "5m" || interval == "15m" || interval == "30m") return 60;
+    if (interval == "1h" || interval == "60m") return 730;
+    return -1;
+}
+
+void MainDialog::updateDateLimits()
+{
+    QString interval = ui.intervalBox->currentText();
+    QDate end = ui.endDateEdit->date();
+
+    int maxDays = maxDaysForInterval(interval);
+
+    if (maxDays > 0)
     {
-        QDate today = QDate::currentDate();
+        QDate minStart = end.addDays(-maxDays);
+        ui.startDateEdit->setMinimumDate(minStart);
 
-        if (p.startDate > p.endDate)
-        {
-            QMessageBox::warning(this, "Invalid Dates",
-                "Start date cannot be later than end date.");
-            return false;
-        }
-
-        if (p.endDate >= today)
-        {
-            QMessageBox::warning(this, "Invalid Dates",
-                "End date cannot be today or in the future.");
-            return false;
-        }
-
-        // 🔹 Intraday 60-day restriction
-        int days = p.startDate.daysTo(p.endDate);
-
-        if (p.interval == "1m" || p.interval == "2m" ||
-            p.interval == "5m" || p.interval == "15m" ||
-            p.interval == "30m" || p.interval == "60m" ||
-            p.interval == "90m" || p.interval == "1h")
-        {
-            if (days > 60)
-            {
-                QMessageBox::warning(this, "Invalid Selection",
-                    "Intraday data cannot exceed 60 days.");
-                return false;
-            }
-        }
+        // auto-correct if out of range
+        if (ui.startDateEdit->date() < minStart)
+            ui.startDateEdit->setDate(minStart);
     }
-
-    return true;
+    else
+    {
+        ui.startDateEdit->setMinimumDate(QDate(2000,1,1));
+    }
 }

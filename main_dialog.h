@@ -34,9 +34,10 @@ private:
     void setupConnections();
     void populateUI();
 
-    // 🔹 New: dynamic range control based on interval
+    // 🔹 Range depends on interval
     void updateRangeOptions(const QString& interval);
 
-    // 🔹 New: validation for date mode
-    bool validateParams(const DownloadParams& p);
+    // 🔹 Date constraints (core of this change)
+    void updateDateLimits();
+    int maxDaysForInterval(const QString& interval);
 };

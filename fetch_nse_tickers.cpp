@@ -4,6 +4,7 @@
 #include <sstream>
 
 // ------------------ PARSE CSV ------------------
+// Extract ticker symbols from NSE CSV (3rd column)
 static std::vector<std::string> parse_csv(const std::string& csv)
 {
     std::vector<std::string> tickers;
@@ -21,13 +22,13 @@ static std::vector<std::string> parse_csv(const std::string& csv)
 
         std::getline(ss, col1, ',');   // Company Name
         std::getline(ss, col2, ',');   // Industry
-        std::getline(ss, symbol, ','); // Symbol (3rd column)
+        std::getline(ss, symbol, ','); // Symbol
 
         // Trim whitespace
         symbol.erase(0, symbol.find_first_not_of(" \t\r\n"));
         symbol.erase(symbol.find_last_not_of(" \t\r\n") + 1);
 
-        // Remove quotes if present
+        // Remove surrounding quotes if present
         if (!symbol.empty() && symbol.front() == '"')
             symbol.erase(0, 1);
         if (!symbol.empty() && symbol.back() == '"')
@@ -47,7 +48,7 @@ static std::string get_index_url(const std::string& index)
            index + "list.csv";
 }
 
-// ------------------ MAIN FUNCTION ------------------
+// ------------------ FETCH NSE TICKERS ------------------
 std::vector<std::string> fetch_nse_tickers(const std::string& index)
 {
     const std::string url = get_index_url(index);
@@ -57,7 +58,7 @@ std::vector<std::string> fetch_nse_tickers(const std::string& index)
     return parse_csv(csv);
 }
 
-// --------- Build ticker list along with the extras in settings.ini ---------
+// ------------------ MERGE WITH CONFIG EXTRAS ------------------
 std::vector<std::string> buildTickerList(const std::string& index, ConfigManager& config)
 {
     auto tickers = fetch_nse_tickers(index);

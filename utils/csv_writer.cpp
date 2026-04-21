@@ -8,7 +8,7 @@
 
 // ---------- Helpers ----------
 
-// Format date (YYYY-MM-DD)
+// Format date as YYYY-MM-DD
 static std::string format_date(long long ts)
 {
     const std::time_t t = static_cast<std::time_t>(ts);
@@ -19,7 +19,7 @@ static std::string format_date(long long ts)
     return oss.str();
 }
 
-// Format datetime (YYYY-MM-DD HH:MM:SS)
+// Format datetime as YYYY-MM-DD HH:MM:SS
 static std::string format_datetime(long long ts)
 {
     const std::time_t t = static_cast<std::time_t>(ts);
@@ -45,11 +45,11 @@ void write_csv(const std::string& filename,
         return;
     }
 
-    // Header (AmiBroker format)
+    // AmiBroker format
     file << "Ticker,Date,Open,High,Low,Close,Volume\n";
 
     const bool intraday = (!interval.empty() &&
-                          (interval.back() == 'm' || interval.back() == 'h'));
+                           (interval.back() == 'm' || interval.back() == 'h'));
 
     const size_t n = data.time.size();
 

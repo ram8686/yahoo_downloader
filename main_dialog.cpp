@@ -30,12 +30,12 @@ void MainDialog::populateUI()
 
     updateRangeOptions(ui.intervalBox->currentText());
 
-    // 🔹 Default dates
+    // Default dates
     QDate today = QDate::currentDate();
     ui.endDateEdit->setDate(today);
     ui.startDateEdit->setDate(today.addMonths(-1));
 
-    // 🔹 Global limits (no future)
+    // Prevent future dates
     ui.endDateEdit->setMaximumDate(today);
     ui.startDateEdit->setMaximumDate(today);
 
@@ -52,6 +52,7 @@ void MainDialog::populateUI()
 
 void MainDialog::setupConnections()
 {
+    // Index change → reload ticker list
     connect(ui.indexBox, &QComboBox::currentTextChanged, this,
         [this](const QString &text)
     {
@@ -65,7 +66,7 @@ void MainDialog::setupConnections()
         ui.tickerBox->setCurrentIndex(0);
     });
 
-    // 🔹 Interval → Range + Date limits
+    // Interval change → update range options + date constraints
     connect(ui.intervalBox, &QComboBox::currentTextChanged, this,
         [this](const QString &interval)
     {
@@ -73,7 +74,7 @@ void MainDialog::setupConnections()
         updateDateLimits();
     });
 
-    // 🔹 Start ≤ End
+    // Ensure start ≤ end
     connect(ui.startDateEdit, &QDateEdit::dateChanged, this,
         [this](const QDate &start)
     {
@@ -87,6 +88,7 @@ void MainDialog::setupConnections()
         updateDateLimits();
     });
 
+    // Toggle between range mode and date mode
     connect(ui.rangeRadio, &QRadioButton::toggled, this,
         [this](bool checked)
     {
@@ -101,7 +103,7 @@ void MainDialog::setupConnections()
             ui.stackedWidget->setCurrentIndex(1);
     });
 
-    // 🔹 No validation — always accept (UI guarantees correctness)
+    // Accept dialog (UI already enforces valid input)
     connect(ui.downloadButton, &QPushButton::clicked, this,
         [this]()
     {
@@ -139,7 +141,7 @@ DownloadParams MainDialog::getParams() const
 }
 
 //
-// 🔹 RANGE CONTROL
+// RANGE CONTROL
 //
 
 void MainDialog::updateRangeOptions(const QString& interval)
@@ -169,7 +171,7 @@ void MainDialog::updateRangeOptions(const QString& interval)
 }
 
 //
-// 🔹 DATE LIMIT LOGIC
+// DATE LIMIT LOGIC
 //
 
 int MainDialog::maxDaysForInterval(const QString& interval)
@@ -192,12 +194,12 @@ void MainDialog::updateDateLimits()
         QDate minStart = end.addDays(-maxDays);
         ui.startDateEdit->setMinimumDate(minStart);
 
-        // auto-correct if out of range
+        // Auto-correct if out of allowed range
         if (ui.startDateEdit->date() < minStart)
             ui.startDateEdit->setDate(minStart);
     }
     else
     {
-        ui.startDateEdit->setMinimumDate(QDate(2000,1,1));
+        ui.startDateEdit->setMinimumDate(QDate());
     }
 }

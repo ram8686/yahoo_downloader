@@ -1,7 +1,8 @@
 #pragma once
 
 #include <string>
-#include "downloader.h"   // For OHLCV
+
+#include "downloader.h"   // For OHLCV data structure
 
 // Write OHLCV data to CSV (AmiBroker format)
 void write_csv(const std::string& filename,

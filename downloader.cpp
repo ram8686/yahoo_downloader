@@ -13,6 +13,7 @@
 using json = nlohmann::json;
 
 // ------------------ CURL CALLBACK ------------------
+// Appends received data to std::string buffer
 static size_t write_callback(void* contents, size_t size, size_t nmemb, std::string* output)
 {
     const size_t totalSize = size * nmemb;
@@ -21,7 +22,7 @@ static size_t write_callback(void* contents, size_t size, size_t nmemb, std::str
 }
 
 // ------------------ URL ------------------
-long to_epoch(const QDate& date)
+static long to_epoch(const QDate& date)
 {
     std::tm tm = {};
     tm.tm_year = date.year() - 1900;
@@ -40,15 +41,14 @@ std::string build_url(const std::string& ticker,
                       const QDate& startDate,
                       const QDate& endDate)
 {
-    std::string base = "https://query1.finance.yahoo.com/v8/finance/chart/" + ticker;
+    const std::string base = "https://query1.finance.yahoo.com/v8/finance/chart/" + ticker;
 
-    // 🔹 RANGE MODE
+    // Uses range OR explicit dates (mutually exclusive modes)
     if (!range.empty())
     {
         return base + "?range=" + range + "&interval=" + interval;
     }
 
-    // 🔹 DATE MODE
     long start_epoch = to_epoch(startDate);
     long end_epoch   = to_epoch(endDate);
 
@@ -93,7 +93,6 @@ OHLCV extract_ohlcv(const json& j)
 {
     OHLCV data;
 
-    // -------- VALIDATION --------
     if (!j.contains("chart") || j["chart"].is_null())
         return data;
 
@@ -118,8 +117,6 @@ OHLCV extract_ohlcv(const json& j)
         return data;
 
     const auto& quote = indicators["quote"][0];
-
-    // -------- ORIGINAL LOGIC CONTINUES --------
 
     const auto& timestamps = result["timestamp"];
     const auto& opens   = quote["open"];
@@ -161,6 +158,9 @@ std::string format_timestamp(long long ts)
 void write_csv(const std::string& filename, const OHLCV& data)
 {
     std::ofstream file(filename);
+
+    if (!file.is_open())
+        return;
 
     file << "datetime,open,high,low,close,volume\n";
 

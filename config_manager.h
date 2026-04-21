@@ -3,15 +3,17 @@
 #include <string>
 #include <vector>
 
+// Simple configuration loader for settings.ini
 class ConfigManager
 {
 public:
-    ConfigManager(const std::string& path);
+    explicit ConfigManager(const std::string& path);
 
     std::string defaultIndex() const;
     std::string defaultInterval() const;
     std::string defaultRange() const;
 
+    // Additional user-defined tickers
     std::vector<std::string> extraTickers() const;
 
 private:

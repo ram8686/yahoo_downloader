@@ -3,16 +3,16 @@
 #include <QElapsedTimer>
 #include <QString>
 #include <QThread>
-#include <QDate>
 
 #include "downloader.h"
 #include "csv_writer.h"
 #include "file_utils.h"
-#include <iostream>
 
 #include <nlohmann/json.hpp>
 
+// ⚠️ Global state (shared across runs) — consider making this a member later
 int completed = 0;
+
 DownloaderWorker::DownloaderWorker(std::vector<std::string> tickers,
                                    std::string interval,
                                    std::string range,
@@ -34,6 +34,7 @@ void DownloaderWorker::requestStop()
 void DownloaderWorker::process()
 {
     std::vector<std::string> failed;
+
     QElapsedTimer totalTimer;
     totalTimer.start();
 
@@ -42,12 +43,13 @@ void DownloaderWorker::process()
 
     for (const auto& t : m_tickers)
     {
-        // 🔴 Cancel check (early)
+        // Check for cancellation before starting next item
         if (stopRequested || QThread::currentThread()->isInterruptionRequested())
         {
             int sec = totalTimer.elapsed() / 1000;
 
             emit status("Cancelled");
+
             QStringList failedList;
             for (const auto &f : failed)
                 failedList << QString::fromStdString(f);
@@ -67,14 +69,16 @@ void DownloaderWorker::process()
             m_startDate,
             m_endDate
         );
+
         const std::string response = fetch_data(url);
 
-        // 🔴 Cancel check (after network call)
+        // Cancellation after network call (important for long requests)
         if (stopRequested)
         {
             int sec = totalTimer.elapsed() / 1000;
 
             emit status("Cancelled");
+
             QStringList failedList;
             for (const auto &f : failed)
                 failedList << QString::fromStdString(f);
@@ -97,22 +101,24 @@ void DownloaderWorker::process()
 
         OHLCV data = extract_ohlcv(j);
 
-        // ---- HANDLE FAILURE ----
+        // No usable data → treat as failure
         if (data.time.empty())
         {
             failed.push_back(t);
             continue;
         }
 
-        // ---- WRITE FILE ----
+        // Write CSV output
         std::string filename = build_filepath(t, m_interval);
         write_csv(filename, data, t, m_interval);
+
         completed++;
 
-        // ---- PROGRESS UPDATE ----
+        // Progress update (percentage)
         int percent = (count * 100) / total;
         emit progress(percent);
 
+        // Basic ETA estimation
         const double elapsed = totalTimer.elapsed() / 1000.0;
         const double avg = elapsed / count;
         const double remaining = avg * (total - count);
@@ -125,7 +131,7 @@ void DownloaderWorker::process()
         emit status(QString::fromStdString(msg));
     }
 
-    // ---- COMPLETION ----
+    // Final completion
     int sec = totalTimer.elapsed() / 1000;
 
     emit progress(100);

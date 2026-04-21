@@ -6,6 +6,7 @@
 #include "config_manager.h"
 #include "ui_ydl_input.h"
 
+// Parameters collected from UI and passed to downloader
 struct DownloadParams
 {
     std::string index;
@@ -25,6 +26,8 @@ class MainDialog : public QDialog
 
 public:
     explicit MainDialog(QWidget *parent = nullptr);
+
+    // Gather current UI state into a parameter struct
     DownloadParams getParams() const;
 
 private:
@@ -34,10 +37,10 @@ private:
     void setupConnections();
     void populateUI();
 
-    // 🔹 Range depends on interval
+    // Update available ranges based on selected interval
     void updateRangeOptions(const QString& interval);
 
-    // 🔹 Date constraints (core of this change)
+    // Enforce valid date selection based on interval constraints
     void updateDateLimits();
     int maxDaysForInterval(const QString& interval);
 };

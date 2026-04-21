@@ -22,7 +22,7 @@ std::string build_filepath(const std::string& ticker,
 {
     std::string base;
 
-    // Intraday vs EOD
+    // Intraday vs EOD directory
     if (!interval.empty() &&
         (interval.back() == 'm' || interval.back() == 'h'))
     {
@@ -35,7 +35,7 @@ std::string build_filepath(const std::string& ticker,
 
     const std::string dir = base + today_date() + "/";
 
-    // Create directory if it doesn't exist
+    // Ensure directory exists
     std::filesystem::create_directories(dir);
 
     return dir + ticker + ".csv";

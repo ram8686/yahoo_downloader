@@ -2,7 +2,6 @@
 #include "ui_progress_dialog.h"
 #include "fetch_nse_tickers.h"
 #include "config_manager.h"
-
 #include "downloader_worker.h"
 
 #include <QThread>
@@ -74,21 +73,18 @@ void ProgressDialog::startDownload()
 
     connect(thread, &QThread::started, worker, &DownloaderWorker::process);
 
-    // Progress update
     connect(worker, &DownloaderWorker::progress, this,
         [this](int value)
     {
         ui->progressBar->setValue(value);
     });
 
-    // Status update
     connect(worker, &DownloaderWorker::status, this,
         [this](const QString &msg)
     {
         ui->statusLabel->setText(msg);
     });
 
-    // ✅ NEW: receive structured result
     connect(worker, &DownloaderWorker::finished, this,
         [this](bool cancelled, QStringList failed, int sec, int total, int completed)
     {
@@ -103,7 +99,11 @@ void ProgressDialog::startDownload()
     thread->start();
 }
 
-void ProgressDialog::showFinalSummary(bool cancelled, const QStringList &failed, int sec, int total, int completed)
+void ProgressDialog::showFinalSummary(bool cancelled,
+                                      const QStringList &failed,
+                                      int sec,
+                                      int total,
+                                      int completed)
 {
     QString msg;
 
@@ -112,7 +112,6 @@ void ProgressDialog::showFinalSummary(bool cancelled, const QStringList &failed,
     else
         msg = QString("Download completed in %1 sec").arg(sec);
 
-    // 🔹 Add completed/total
     msg += QString("\n\nCompleted: %1 / %2").arg(completed).arg(total);
 
     if (cancelled)
@@ -121,7 +120,6 @@ void ProgressDialog::showFinalSummary(bool cancelled, const QStringList &failed,
         msg += QString("\nRemaining: %1").arg(remaining);
     }
 
-    // 🔹 Failed list
     if (!failed.isEmpty())
     {
         msg += "\n\nFailed tickers:\n";

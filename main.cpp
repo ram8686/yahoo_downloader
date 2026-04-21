@@ -1,5 +1,6 @@
 #include <QApplication>
 #include <QIcon>
+
 #include "main_dialog.h"
 #include "progress_dialog.h"
 
@@ -14,7 +15,7 @@ int main(int argc, char *argv[])
 
     if (dialog.exec() == QDialog::Accepted)
     {
-        auto params = dialog.getParams();
+        const auto params = dialog.getParams();
 
         ProgressDialog progress(params);
         progress.setWindowTitle("Downloading...");

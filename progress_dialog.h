@@ -31,11 +31,12 @@ private:
     DownloaderWorker *worker;
     DownloadParams m_params;
 
-    // 🔹 New state tracking
-    bool m_cancelRequested = false;
-    QElapsedTimer m_timer;
-
-    // 🔹 Helpers
     void setupConnections();
-    void showFinalSummary(bool cancelled, const QStringList &failed, int sec, int total, int completed);
+
+    // Display final summary (success/failure/cancelled)
+    void showFinalSummary(bool cancelled,
+                          const QStringList &failed,
+                          int sec,
+                          int total,
+                          int completed);
 };

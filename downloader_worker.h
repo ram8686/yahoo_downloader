@@ -8,6 +8,8 @@
 #include <atomic>
 #include <QStringList>
 
+// Worker that performs downloads in a background thread.
+// No UI interaction — communicates via signals.
 class DownloaderWorker : public QObject
 {
     Q_OBJECT
@@ -16,20 +18,25 @@ public:
     DownloaderWorker(std::vector<std::string> tickers,
                      std::string interval,
                      std::string range,
-                    QDate startDate,
-                    QDate endDate);
+                     QDate startDate,
+                     QDate endDate);
 
+    // Request graceful stop (checked inside processing loop)
     void requestStop();
 
 public slots:
-    void process();
+    void process();  // main execution entry (runs in worker thread)
 
 signals:
-    void progress(int value);             // % progress
-    void status(const QString &msg);      // status text
+    void progress(int value);     // 0–100
+    void status(const QString &msg);
 
-    // 🔹 Updated signal with structured result
-    void finished(bool cancelled, QStringList failed, int timeSec, int total, int completed);
+    // Final result summary
+    void finished(bool cancelled,
+                  QStringList failed,
+                  int timeSec,
+                  int total,
+                  int completed);
 
 private:
     std::vector<std::string> m_tickers;

@@ -6,7 +6,7 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
-// OHLCV data container
+// Simple container for OHLCV market data
 struct OHLCV
 {
     std::vector<long long> time;
@@ -14,21 +14,22 @@ struct OHLCV
     std::vector<long long> volume;
 };
 
-// Build Yahoo Finance URL
+// Build Yahoo Finance request URL.
+// Uses either 'range' OR (startDate, endDate) depending on mode.
 std::string build_url(const std::string& ticker,
                       const std::string& range,
                       const std::string& interval,
                       const QDate& startDate,
                       const QDate& endDate);
 
-// Fetch raw JSON response
+// Perform HTTP request and return raw JSON response as string
 std::string fetch_data(const std::string& url);
 
-// Extract OHLCV from JSON
+// Parse JSON response into OHLCV structure
 OHLCV extract_ohlcv(const nlohmann::json& j);
 
-// Write OHLCV data to CSV
+// Write OHLCV data to CSV file
 void write_csv(const std::string& filename, const OHLCV& data);
 
-// Format UNIX timestamp to string
+// Convert UNIX timestamp to formatted date string
 std::string format_timestamp(long long ts);

@@ -3,6 +3,16 @@
 #include <fstream>
 #include <sstream>
 
+// Trim helper (whitespace on both ends)
+static std::string trim(const std::string& s)
+{
+    const auto start = s.find_first_not_of(" \t\r\n");
+    if (start == std::string::npos) return {};
+
+    const auto end = s.find_last_not_of(" \t\r\n");
+    return s.substr(start, end - start + 1);
+}
+
 ConfigManager::ConfigManager(const std::string& path)
 {
     load(path);
@@ -19,27 +29,29 @@ void ConfigManager::load(const std::string& path)
 
     while (std::getline(file, line))
     {
+        line = trim(line);
+
         if (line.empty() || line[0] == '#')
             continue;
 
-        if (line[0] == '[')
+        if (line.front() == '[' && line.back() == ']')
         {
             section = line;
             continue;
         }
 
-        auto pos = line.find('=');
+        const auto pos = line.find('=');
         if (pos == std::string::npos)
             continue;
 
-        std::string key = line.substr(0, pos);
-        std::string value = line.substr(pos + 1);
+        std::string key = trim(line.substr(0, pos));
+        std::string value = trim(line.substr(pos + 1));
 
         if (section == "[General]")
         {
-            if (key == "default_index") m_defaultIndex = value;
-            if (key == "default_interval") m_defaultInterval = value;
-            if (key == "default_range") m_defaultRange = value;
+            if (key == "default_index")     m_defaultIndex = value;
+            else if (key == "default_interval") m_defaultInterval = value;
+            else if (key == "default_range")    m_defaultRange = value;
         }
         else if (section == "[Tickers]")
         {
@@ -50,7 +62,9 @@ void ConfigManager::load(const std::string& path)
 
                 while (std::getline(ss, item, ','))
                 {
-                    m_extras.push_back(item);
+                    item = trim(item);
+                    if (!item.empty())
+                        m_extras.push_back(item);
                 }
             }
         }

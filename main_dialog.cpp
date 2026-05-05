@@ -167,7 +167,7 @@ void MainDialog::updateRangeOptions(const QString& interval)
                                "3mo","6mo","1y","2y","5y","10y","ytd","max"});
     }
 
-    ui.rangeBox->setCurrentIndex(0);
+    ui.rangeBox->setCurrentIndex(2);
 }
 
 //

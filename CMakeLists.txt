@@ -12,7 +12,7 @@ find_package(CURL REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 
-add_executable(yahoo_downloader
+add_executable(yahoo_downloader WIN32
     main.cpp
     downloader.cpp
     downloader_worker.cpp

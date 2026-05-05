@@ -10,6 +10,10 @@
 #include <sstream>
 #include <iostream>
 
+#include <QCoreApplication>
+#include <QString>
+
+
 using json = nlohmann::json;
 
 // ------------------ CURL CALLBACK ------------------
@@ -71,6 +75,9 @@ std::string fetch_data(const std::string& url)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
+    QString certPath = QCoreApplication::applicationDirPath() + "/ca-bundle.crt";
+
+    curl_easy_setopt(curl, CURLOPT_CAINFO, certPath.toStdString().c_str());
     struct curl_slist* headers = nullptr;
     headers = curl_slist_append(headers, "User-Agent: Mozilla/5.0");
     headers = curl_slist_append(headers, "Accept: application/json");
